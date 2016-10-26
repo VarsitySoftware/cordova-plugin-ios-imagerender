@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  id="com.varsitysoftware.plugins.ios.imagerender"
+  version="1.0.0">
+
+	<name>Image Render</name>
+	 
+	<description>
+		This plugin adds an overlay and/or a CSS filter to an image file
+	</description>
+	
+	<license>MIT</license>
+
+	<engines>
+		<engine name="cordova" version=">=3.5.0" />
+	</engines>  
+
+	<js-module src="www/imagerender.js" name="ImageRender">
+		<clobbers target="plugins.imageRender" />
+	</js-module>
+
+	<!-- ios -->
+	<platform name="ios">
+		<config-file target="config.xml" parent="/*">
+			<feature name="ImageRender">
+				<param name="ios-package" value="ImageRender"/>
+			</feature>
+		</config-file>
+
+		<header-file src="src/ios/ImageRender.h" />
+		<source-file src="src/ios/ImageRender.m" />
+		
+		<header-file src="src/ios/UIImage+animatedGIF.h" />
+		<source-file src="src/ios/UIImage+animatedGIF.m" />
+		
+		<framework src="ImageIO.framework" weak="true" />		
+		<framework src="CoreGraphics.framework" />
+		<framework src="AssetsLibrary.framework" />
+		<framework src="MobileCoreServices.framework" />
+		<framework src="CoreGraphics.framework" />
+		<framework src="CoreMedia.framework" />
+		<framework src="CoreVideo.framework" />
+		<framework src="OpenGLES.framework" />
+		<framework src="QuartzCore.framework" />
+		<framework src="UIKit.framework" />
+		<framework src="AVFoundation.framework" />
+		<framework src="Foundation.framework" />
+		<framework src="MobileCoreServices.framework" />
+		
+	</platform>
+
+</plugin> 
