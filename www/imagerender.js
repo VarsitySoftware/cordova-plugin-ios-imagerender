@@ -10,7 +10,7 @@ ImageRender.prototype.run = function (success, fail, options)
     }
 
     var params = {
-        tyoe: options.tyoe ? options.tyoe : 0
+        type: options.type ? options.type : 0
         url: options.url ? options.url : null,
         filter: options.filter ? options.filter : null,
         cssPath: options.cssPath ? options.cssPath : null,
