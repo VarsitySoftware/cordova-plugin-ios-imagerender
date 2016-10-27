@@ -32,6 +32,7 @@
 	NSString * strLoadDelay = [options objectForKey:@"overlayBase64"];
 
 	int intQuality = [[options objectForKey:@"quality"] integerValue];
+	int intType = [[options objectForKey:@"type"] integerValue];
 
 	//int intFrameCount;
 	//int intFramesToUse;
