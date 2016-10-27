@@ -20,8 +20,9 @@
 
 @property(readwrite, nonatomic) float loadDelay;
 
-@property(readwrite, nonatomic) int gifWidth;
-@property(readwrite, nonatomic) int gifHeight;
+@property(readwrite, nonatomic) int imageType;
+@property(readwrite, nonatomic) int imageWidth;
+@property(readwrite, nonatomic) int imageHeight;
 
 @property(readwrite, nonatomic) int quality;
 
