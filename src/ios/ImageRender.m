@@ -31,22 +31,34 @@
 	NSString * strOverlayBase64 = [options objectForKey:@"overlayBase64"];
 	NSString * strLoadDelay = [options objectForKey:@"overlayBase64"];
 
+	NSString * strFileExtension;
+
 	int intQuality = [[options objectForKey:@"quality"] integerValue];
 	int intType = [[options objectForKey:@"type"] integerValue];
 
-	//int intFrameCount;
-	//int intFramesToUse;
-
 	int intCounter = 0;
 	int intFramesExtracted = 0;
-
-	//int intGifWidth = 0;
-	//int intGifHeight = 0;
 
 	int intWebViewHeight = 0;
 
 	int intScreenWidth = 0;
 	int intScreenHeight = 0;
+
+	///////////////////////////////////////// 
+	// SET IMAGE TYPE FILE EXTENSION
+	/////////////////////////////////////////
+
+	self.imageType = intType;
+
+	if (intType == 1)
+	{
+		strFileExtension = @"jpg";
+	}
+
+	if (intType == 2)
+	{
+		strFileExtension = @"gif";
+	}
 
 	///////////////////////////////////////// 
 	// SET PIXEL DENSITY
@@ -91,16 +103,16 @@
 	/////////////////////////////////////////
 
 	NSURL* remoteURL = [NSURL URLWithString:strURL];   
-	self.localURL = [self saveLocalFileFromRemoteUrl: remoteURL extension:@"gif"]; 
+	self.localURL = [self saveLocalFileFromRemoteUrl: remoteURL extension:strFileExtension]; 
 
 	///////////////////////////////////////// 
 	// SET ANIMATED GIF PATH
 	/////////////////////////////////////////
 
-	NSString *strGIFPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"animated.gif"];
+	//NSString *strGIFPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"animated.gif"];
    
 	///////////////////////////////////////// 
-	// CREATE UIMAGE FROM ANIMATED GIF (UIImage+animatedGIF.h)
+	// CREATE UIMAGE FROM IMAGE - WORKS WITH ANIMATED GIFs (UIImage+animatedGIF.h)
 	/////////////////////////////////////////
 
 	UIImage * imgWithAnimation = [UIImage animatedImageWithAnimatedGIFURL:(NSURL *)self.localURL];
@@ -109,8 +121,8 @@
 	// GET DIMENSIONS
 	/////////////////////////////////////////
 
-	self.gifWidth = imgWithAnimation.size.width;
-	self.gifHeight = imgWithAnimation.size.height;
+	self.imageWidth = imgWithAnimation.size.width;
+	self.imageHeight = imgWithAnimation.size.height;
 
 	///////////////////////////////////////// 
 	// SET FRAME COUNT
@@ -162,7 +174,7 @@
 	}		
 	
 	///////////////////////////////////////// 
-	// EXTRACT FRAMES FROM GIF
+	// EXTRACT FRAMES FROM IMAGE (ONLY GETS SINGLE FILE FOR JPGs but MULTIPLE FRAMES FOR ANIMATED GIFS)
 	/////////////////////////////////////////
 
 	for (int i = 0; i < self.numberOfFramesTotal; i++)
@@ -178,10 +190,7 @@
 			[html appendString:base64String];
 			[html appendString:@"'>"];
 			[html appendString:@"</div>"];
-			//[html appendString:@"<span style='color:#fff;'>"];
-			//[html appendString:[NSString stringWithFormat:@"%i", intFramesExtracted]];		
-			//[html appendString:@"</span>"];
-
+			
 			intFramesExtracted++;
 		}
 
@@ -205,7 +214,7 @@
 	// SET POS Y TO SCREEN HEIGHT SO IT SHOWS BELOW THE FOLD
 	/////////////////////////////////////////
 	
-	self.webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, intScreenHeight, self.gifWidth, intScreenHeight)]; 	
+	self.webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, intScreenHeight, self.imageWidth, intScreenHeight)]; 	
 	self.webView.delegate = self;
 	[self.webView loadHTMLString:[html description] baseURL:nil];
 
@@ -237,19 +246,40 @@
 
 	int intPosY = 0;
 
-	int intCropWidth = self.gifWidth * self.pixelDensity;
-	int intCropHeight = self.gifHeight * self.pixelDensity;
+	int intCropWidth = self.imageWidth * self.pixelDensity;
+	int intCropHeight = self.imageHeight * self.pixelDensity;
 
-	int intOutputWidth = self.gifWidth;
-	int intOutputHeight = self.gifHeight;
+	int intOutputWidth = self.imageWidth;
+	int intOutputHeight = self.imageHeight;
 	
 	unsigned long long fileSize = 0;
 
+	CGImageDestinationRef renderedImage;
+	NSDictionary *frameProperties;
+	NSDictionary *imageProperties;
+
 	///////////////////////////////////////// 
-	// SET GIF PATH
+	// SET IMAGE TYPE FILE EXTENSION
 	/////////////////////////////////////////
 
-	NSString *strAnimatedGIFPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"animated.gif"];
+	NSString * strFileName;
+
+	if (self.imageType == 1)
+	{
+		strFileName = @"rendered.jpg";
+	}
+
+	if (self.imageType == 2)
+	{
+		strFileName = @"rendered.gif";
+	}
+
+	///////////////////////////////////////// 
+	// SET RENDERED IMAGE PATH
+	/////////////////////////////////////////
+
+	//NSString *strRenderedImagePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:@"animated.gif"];
+	NSString *strRenderedImagePath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject] stringByAppendingPathComponent:strFileName];
   
 	///////////////////////////////////////// 
 	// GET SCREENSHOT
@@ -264,8 +294,8 @@
 	if (self.quality < 100)
 	{
 		float fltQuality = self.quality / 100.0;
-		float fltOutputWidth = self.gifWidth * fltQuality;
-		float fltOutputHeight = self.gifHeight * fltQuality;
+		float fltOutputWidth = self.imageWidth * fltQuality;
+		float fltOutputHeight = self.imageHeight * fltQuality;
 
 		intOutputWidth = (int) fltOutputWidth;
 		intOutputHeight = (int) fltOutputHeight;		
@@ -278,29 +308,50 @@
 	CGSize scaledSize = CGSizeMake(intOutputWidth, intOutputHeight);
 	
 	///////////////////////////////////////// 
-	// SET GIF PROPERTIES
+	// SET IMAGE PROPERTIES
 	/////////////////////////////////////////
 
-	NSDictionary *frameProperties = [NSDictionary dictionaryWithObject:
+	if (self.imageType == 1) // JPEG
+	{
+		frameProperties = nil;
+		imageProperties = nil;
+	}
+
+	if (self.imageType == 2) // GIF
+	{
+		frameProperties = [NSDictionary dictionaryWithObject:
 		[NSDictionary  dictionaryWithObject:[NSNumber numberWithInt:0.0]  
 		forKey:(NSString *) kCGImagePropertyGIFDelayTime] 
 		forKey:(NSString *) kCGImagePropertyGIFDictionary];
 
-	NSDictionary *gifProperties = [NSDictionary dictionaryWithObject:
+		imageProperties = [NSDictionary dictionaryWithObject:
 		[NSDictionary dictionaryWithObject:[NSNumber numberWithInt:0]
-         forKey:(NSString *) kCGImagePropertyGIFLoopCount]
+        forKey:(NSString *) kCGImagePropertyGIFLoopCount]
 		forKey:(NSString *) kCGImagePropertyGIFDictionary];
+	}	
 	  
     ///////////////////////////////////////// 
 	// CREATE IMAGE DESTINATION
 	/////////////////////////////////////////
 
-	CGImageDestinationRef animatedGIF = CGImageDestinationCreateWithURL(
-       (CFURLRef) [NSURL fileURLWithPath:strAnimatedGIFPath],
-       kUTTypeGIF,
-       self.numberOfFramesToUse, // number of images in this GIF
-       NULL);
-	
+	if (self.imageType == 1) // JPEG
+	{
+		renderedImage = CGImageDestinationCreateWithURL(
+		(CFURLRef) [NSURL fileURLWithPath:strRenderedImagePath],
+		kUTTypeJPEG,
+		self.numberOfFramesToUse, // number of images in this GIF
+		NULL);
+	}
+
+	if (self.imageType == 2) // GIF
+	{
+		renderedImage = CGImageDestinationCreateWithURL(
+		(CFURLRef) [NSURL fileURLWithPath:strRenderedImagePath],
+		kUTTypeGIF,
+		self.numberOfFramesToUse, // number of images in this GIF
+		NULL);
+	}	
+
 	///////////////////////////////////////// 
 	// GET FRAMES
 	/////////////////////////////////////////
@@ -341,7 +392,7 @@
 		// ADD IMAGE TO DESTINATION
 		/////////////////////////////////////////
 
-		CGImageDestinationAddImage(animatedGIF, imgResult.CGImage, (CFDictionaryRef)frameProperties);
+		CGImageDestinationAddImage(renderedImage, imgResult.CGImage, (CFDictionaryRef)frameProperties);
 		
 		///////////////////////////////////////// 
 		// MOVE Y POS TO NEXT IMAGE
@@ -354,15 +405,19 @@
 	// FINALIZE IMAGE DESTINATION
 	/////////////////////////////////////////
 
-	CGImageDestinationSetProperties(animatedGIF, (CFDictionaryRef)gifProperties);
-    CGImageDestinationFinalize(animatedGIF);
-	CFRelease(animatedGIF);
+	if (self.imageType == 2) // GIF
+	{
+		CGImageDestinationSetProperties(renderedImage, (CFDictionaryRef)imageProperties);
+	}
+
+    CGImageDestinationFinalize(renderedImage);
+	CFRelease(renderedImage);
 	
 	///////////////////////////////////////// 
 	// GET FILE SIZE
 	/////////////////////////////////////////
 	
-	fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:strAnimatedGIFPath error:nil] fileSize];
+	fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:strRenderedImagePath error:nil] fileSize];
 	NSString *strFileSize = [NSByteCountFormatter stringFromByteCount:fileSize countStyle:NSByteCountFormatterCountStyleFile];
  
 	///////////////////////////////////////// 
@@ -376,7 +431,7 @@
         nil
     ]; 
 
-	self.jsonResults[@"filePath"] = strAnimatedGIFPath;	
+	self.jsonResults[@"filePath"] = strRenderedImagePath;	
 	self.jsonResults[@"fileSize"] = strFileSize;	
 
 	self.pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:self.jsonResults];	
@@ -384,7 +439,7 @@
 	[self.pluginResult setKeepCallbackAsBool:NO]; // here we tell Cordova not to cleanup the callback id after sendPluginResult()					
 	[self.commandDelegate sendPluginResult:self.pluginResult callbackId:self.callbackId];		
 	
-	//NSLog(@"animated GIF file created at %@", strAnimatedGIFPath);
+	//NSLog(@"animated GIF file created at %@", strRenderedImagePath);
 
  } 
  
@@ -394,7 +449,7 @@
 	// SEND RESULT BACK TO CORDOVA
 	/////////////////////////////////////////
 
-	UIWebView *preview =[[UIWebView alloc] initWithFrame:CGRectMake(0, 350, self.gifWidth, self.gifHeight)]; 	
+	UIWebView *preview =[[UIWebView alloc] initWithFrame:CGRectMake(0, 350, self.imageWidth, self.imageHeight)]; 	
 
 	NSMutableString *html = [NSMutableString stringWithString: @""];
 
@@ -405,7 +460,7 @@
 	[html appendString:@"<body style=\"background:transparent; padding:0px; margin:0px;\">"];
 
 	[html appendString:@"<img style='width:320px;' src='"];    
-	//[html appendString:[NSString stringWithFormat:@"file://%@", strAnimatedGIFPath]];     
+	//[html appendString:[NSString stringWithFormat:@"file://%@", strRenderedImagePath]];     
 	[html appendString:@"'/>"];    	
     [html appendString:@"</body></html>"];
 
