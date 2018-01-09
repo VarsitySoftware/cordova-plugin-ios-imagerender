@@ -1,0 +1,20 @@
+{
+    "version": "0.0.1",
+    "name": "cordova-ios-imagerender",
+    "cordova_name": "IOS Image Render",
+    "description": "IOS  Image Render",
+    "license": "MIT",
+    "repo": "https://github.com/VarsitySoftware/cordova-plugin-ios-imagerender.git",
+    "keywords": [
+        "cordova",
+        "ios",
+        "UIStatusBarHidden",
+        "UIViewControllerBasedStatusBarAppearance",
+        "ios9"
+    ],
+    "platforms": [
+        "ios"
+    ],
+    "engines": [],
+    "englishdoc": ""
+}
